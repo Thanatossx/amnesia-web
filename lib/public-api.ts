@@ -68,7 +68,7 @@ export async function submitApplicant(data: ApplicantInsert): Promise<void> {
   const { error } = await supabase.from("applicants").insert({
     event_id: data.event_id,
     full_name: data.full_name.trim(),
-    email: data.email?.trim() || null,
+    email: data.email?.trim() || "",
     phone: data.phone?.trim() || null,
     answers: data.answers ?? {},
     status: "bekliyor",
