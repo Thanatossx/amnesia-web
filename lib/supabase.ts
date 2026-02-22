@@ -10,3 +10,13 @@ export function createClient(): SupabaseClient {
   }
   return createSupabaseClient(url, key);
 }
+
+/** Sunucu tarafında RLS'i aşmak için (sadece API route'larda kullanın). .env.local'e SUPABASE_SERVICE_ROLE_KEY ekleyin. */
+export function createServerClient(): SupabaseClient {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  if (!url || !key) {
+    throw new Error("Supabase env eksik.");
+  }
+  return createSupabaseClient(url, key);
+}

@@ -21,7 +21,7 @@ export default function Footer() {
               AMNESIA
             </Link>
             <p className="mt-2 text-sm text-text-muted">
-              Rave party organizasyonu — unutulmaz geceler.
+              Lights out, mind on.
             </p>
           </div>
           <nav aria-label="Footer">

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { submitApplicant } from "@/lib/public-api";
-import type { Event } from "@/types";
+import type { Event, FormQuestion, ApplicantAnswers } from "@/types";
 
 interface ApplyModalProps {
   isOpen: boolean;
@@ -10,12 +10,26 @@ interface ApplyModalProps {
   event: Event | null;
 }
 
+const inputClasses =
+  "w-full rounded-xl border border-accent/30 bg-background px-4 py-2.5 text-text placeholder:text-text-muted/50 outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/30";
+
 export default function ApplyModal({ isOpen, onClose, event }: ApplyModalProps) {
   const [fullName, setFullName] = useState("");
-  const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
+  const [answers, setAnswers] = useState<ApplicantAnswers>({});
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const formQuestions: FormQuestion[] = (event?.form_questions ?? [])
+    .filter((q) => q && typeof q.label === "string" && q.label.trim())
+    .map((q) => ({
+      ...q,
+      id: q.id || `q-${Math.random()}`,
+      label: q.label.trim(),
+      type: q.type || "text",
+      required: !!q.required,
+      ...(q.type === "select" && { options: Array.isArray(q.options) ? q.options : [] }),
+    }));
 
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => e.key === "Escape" && onClose();
@@ -23,12 +37,19 @@ export default function ApplyModal({ isOpen, onClose, event }: ApplyModalProps) 
       document.body.style.overflow = "hidden";
       window.addEventListener("keydown", handleEscape);
       setError(null);
+      setFullName("");
+      setPhone("");
+      setAnswers({});
     }
     return () => {
       document.body.style.overflow = "";
       window.removeEventListener("keydown", handleEscape);
     };
   }, [isOpen, onClose]);
+
+  function setAnswer(id: string, value: string | string[] | boolean) {
+    setAnswers((prev) => ({ ...prev, [id]: value }));
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -38,15 +59,15 @@ export default function ApplyModal({ isOpen, onClose, event }: ApplyModalProps) 
     try {
       await submitApplicant({
         event_id: event.id,
-        full_name: fullName,
-        email,
-        phone: phone || null,
-        answers: {},
+        full_name: fullName.trim(),
+        email: null,
+        phone: phone.trim() || null,
+        answers,
         status: "bekliyor",
       });
       setFullName("");
-      setEmail("");
       setPhone("");
+      setAnswers({});
       onClose();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Başvuru gönderilemedi.");
@@ -68,8 +89,8 @@ export default function ApplyModal({ isOpen, onClose, event }: ApplyModalProps) 
         className="absolute inset-0 bg-black/85 backdrop-blur-md"
         onClick={onClose}
       />
-      <div className="relative w-full max-w-lg rounded-2xl border border-accent/30 bg-background-dark shadow-2xl shadow-accent/20 animate-fade-in-up">
-        <div className="flex items-center justify-between border-b border-accent/20 px-6 py-5">
+      <div className="relative flex max-h-[90vh] w-full max-w-lg flex-col rounded-2xl border border-accent/30 bg-background-dark shadow-2xl shadow-accent/20 animate-fade-in-up">
+        <div className="flex shrink-0 items-center justify-between border-b border-accent/20 px-6 py-5">
           <h2 id="modal-title" className="text-lg font-semibold text-text-bright">
             Başvuru — {event?.title ?? "Etkinlik"}
           </h2>
@@ -84,54 +105,144 @@ export default function ApplyModal({ isOpen, onClose, event }: ApplyModalProps) 
             </svg>
           </button>
         </div>
-        <form className="space-y-5 p-6" onSubmit={handleSubmit}>
+        <form className="flex min-h-0 flex-1 flex-col" onSubmit={handleSubmit}>
+          <div className="scroll-area min-h-0 flex-1 space-y-5 overflow-y-auto p-6">
           <div>
-            <label htmlFor="full_name" className="mb-1.5 block text-sm font-medium text-text-muted">
-              Ad Soyad
+            <label htmlFor="apply-full_name" className="mb-1.5 block text-sm font-medium text-text-muted">
+              Ad Soyad <span className="text-red-400">*</span>
             </label>
             <input
-              id="full_name"
+              id="apply-full_name"
               type="text"
               required
               value={fullName}
               onChange={(e) => setFullName(e.target.value)}
-              className="w-full rounded-xl border border-accent/30 bg-background px-4 py-2.5 text-text placeholder:text-text-muted/50 outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/30"
+              className={inputClasses}
               placeholder="Adınız Soyadınız"
             />
           </div>
           <div>
-            <label htmlFor="email" className="mb-1.5 block text-sm font-medium text-text-muted">
-              E-posta
+            <label htmlFor="apply-phone" className="mb-1.5 block text-sm font-medium text-text-muted">
+              Telefon <span className="text-red-400">*</span>
             </label>
             <input
-              id="email"
-              type="email"
-              required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full rounded-xl border border-accent/30 bg-background px-4 py-2.5 text-text placeholder:text-text-muted/50 outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/30"
-              placeholder="ornek@email.com"
-            />
-          </div>
-          <div>
-            <label htmlFor="phone" className="mb-1.5 block text-sm font-medium text-text-muted">
-              Telefon
-            </label>
-            <input
-              id="phone"
+              id="apply-phone"
               type="tel"
+              required
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
-              className="w-full rounded-xl border border-accent/30 bg-background px-4 py-2.5 text-text placeholder:text-text-muted/50 outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/30"
-              placeholder="05XX XXX XX XX"
+              className={inputClasses}
+              placeholder="XXXXXXX"
             />
           </div>
+
+          {formQuestions.length === 0 ? (
+            <p className="rounded-xl border border-accent/20 bg-background/50 px-4 py-3 text-sm text-text-muted">
+              Bu etkinlik için henüz soru eklenmemiş. Lütfen admin panelinden etkinliğe form soruları ekleyin.
+            </p>
+          ) : null}
+
+          {formQuestions.map((q) => (
+            <div key={q.id}>
+              <label htmlFor={q.id} className="mb-1.5 block text-sm font-medium text-text-muted">
+                {q.label}
+                {(q.required ?? false) && <span className="text-red-400"> *</span>}
+              </label>
+              {q.type === "text" && (
+                <input
+                  id={q.id}
+                  type="text"
+                  required={q.required ?? false}
+                  value={(answers[q.id] as string) ?? ""}
+                  onChange={(e) => setAnswer(q.id, e.target.value)}
+                  className={inputClasses}
+                  placeholder={q.label}
+                />
+              )}
+              {q.type === "textarea" && (
+                <textarea
+                  id={q.id}
+                  required={q.required ?? false}
+                  value={(answers[q.id] as string) ?? ""}
+                  onChange={(e) => setAnswer(q.id, e.target.value)}
+                  rows={3}
+                  className={inputClasses}
+                  placeholder={q.label}
+                />
+              )}
+              {q.type === "tel" && (
+                <input
+                  id={q.id}
+                  type="tel"
+                  value={(answers[q.id] as string) ?? ""}
+                  onChange={(e) => setAnswer(q.id, e.target.value)}
+                  className={inputClasses}
+                  placeholder="XXXXXXX"
+                />
+              )}
+              {q.type === "select" && (
+                <select
+                  id={q.id}
+                  required={q.required ?? false}
+                  value={(answers[q.id] as string) ?? ""}
+                  onChange={(e) => setAnswer(q.id, e.target.value)}
+                  className={inputClasses}
+                >
+                  <option value="">Seçiniz</option>
+                  {(Array.isArray(q.options) ? q.options : []).map((opt, i) => (
+                    <option key={`${q.id}-${i}-${opt}`} value={String(opt)}>
+                      {String(opt)}
+                    </option>
+                  ))}
+                </select>
+              )}
+              {q.type === "checkbox" && (() => {
+                const opts = Array.isArray(q.options) ? q.options : [];
+                if (opts.length === 0) {
+                  return (
+                    <label className="flex items-center gap-2">
+                      <input
+                        id={q.id}
+                        type="checkbox"
+                        checked={(answers[q.id] as boolean) ?? false}
+                        onChange={(e) => setAnswer(q.id, e.target.checked)}
+                        className="rounded border-accent/30 text-accent"
+                      />
+                      <span className="text-sm text-text-muted">Evet</span>
+                    </label>
+                  );
+                }
+                const selected = (answers[q.id] as string[] | undefined) ?? [];
+                const toggle = (val: string) => {
+                  const next = selected.includes(val) ? selected.filter((v) => v !== val) : [...selected, val];
+                  setAnswer(q.id, next);
+                };
+                return (
+                  <div className="space-y-2">
+                    {opts.map((opt, i) => (
+                      <label key={`${q.id}-${i}-${opt}`} className="flex items-center gap-2">
+                        <input
+                          type="checkbox"
+                          checked={selected.includes(String(opt))}
+                          onChange={() => toggle(String(opt))}
+                          className="rounded border-accent/30 text-accent"
+                        />
+                        <span className="text-sm text-text-muted">{String(opt) || `Seçenek ${i + 1}`}</span>
+                      </label>
+                    ))}
+                  </div>
+                );
+              })()}
+            </div>
+          ))}
+
           {error && (
             <p className="rounded-xl bg-red-500/10 px-4 py-2.5 text-sm text-red-400 border border-red-500/20">
               {error}
             </p>
           )}
-          <div className="flex gap-3 pt-2">
+          </div>
+          <div className="flex shrink-0 gap-3 border-t border-accent/20 p-6">
             <button
               type="button"
               onClick={onClose}

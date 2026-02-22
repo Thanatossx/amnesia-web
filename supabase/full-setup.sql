@@ -2,6 +2,9 @@
 -- AMNESIA - Supabase tam kurulum (tek seferde çalıştır)
 -- Supabase Dashboard > SQL Editor'a yapıştırıp Run ile çalıştırın.
 -- Tablolar zaten varsa "already exists" uyarıları alabilirsiniz; RLS kısmı yine uygulanır.
+--
+-- Afiş yükleme için: Storage > New bucket > "posters" adında public bucket oluşturun.
+-- Bucket Policies: Allow public read; Allow anon insert (veya service role ile yükleyin).
 -- =============================================================================
 
 -- UUID extension (Supabase'de genelde zaten açıktır)
@@ -35,7 +38,7 @@ CREATE TABLE IF NOT EXISTS applicants (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   event_id UUID NOT NULL REFERENCES events (id) ON DELETE CASCADE,
   full_name TEXT NOT NULL,
-  email TEXT NOT NULL,
+  email TEXT,
   phone TEXT,
   answers JSONB DEFAULT '{}'::jsonb,
   status TEXT NOT NULL DEFAULT 'bekliyor' CHECK (

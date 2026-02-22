@@ -79,7 +79,7 @@ export default function ContactPage() {
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
               className="w-full rounded-xl border border-accent/30 bg-background px-4 py-3 text-text outline-none transition placeholder:text-text-muted/50 focus:border-accent focus:ring-2 focus:ring-accent/30"
-              placeholder="05XX XXX XX XX"
+              placeholder="XXXXXXX"
             />
           </div>
           <div>

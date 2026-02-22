@@ -7,7 +7,6 @@ import { getEvents, createEvent, updateEvent, deleteEvent } from "@/lib/admin-ap
 const QUESTION_TYPES: { value: FormQuestion["type"]; label: string }[] = [
   { value: "text", label: "Metin" },
   { value: "textarea", label: "Uzun Metin" },
-  { value: "email", label: "E-posta" },
   { value: "tel", label: "Telefon" },
   { value: "select", label: "Seçenek Listesi" },
   { value: "checkbox", label: "Onay Kutusu" },
@@ -29,7 +28,8 @@ export default function AdminEventsPage() {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [eventDate, setEventDate] = useState("");
-  const [posterFile, setPosterFile] = useState<File | null>(null);
+  const [isActive, setIsActive] = useState(true);
+  const [posterUrl, setPosterUrl] = useState("");
   const [posterPreview, setPosterPreview] = useState<string | null>(null);
   const [questions, setQuestions] = useState<FormQuestion[]>([]);
   const [submitting, setSubmitting] = useState(false);
@@ -50,17 +50,6 @@ export default function AdminEventsPage() {
   useEffect(() => {
     loadEvents();
   }, []);
-
-  const handlePosterChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setPosterFile(file);
-      setPosterPreview(URL.createObjectURL(file));
-    } else {
-      setPosterFile(null);
-      setPosterPreview(null);
-    }
-  };
 
   const addQuestion = () => {
     setQuestions((prev) => [
@@ -84,8 +73,9 @@ export default function AdminEventsPage() {
     setTitle(event.title);
     setDescription(event.description ?? "");
     setEventDate(toDatetimeLocal(event.event_date));
-    setPosterFile(null);
-    setPosterPreview(event.poster_url);
+    setIsActive(event.is_active);
+    setPosterUrl(event.poster_url ?? "");
+    setPosterPreview(event.poster_url ?? null);
     setQuestions(Array.isArray(event.form_questions) ? event.form_questions : []);
   };
 
@@ -94,7 +84,8 @@ export default function AdminEventsPage() {
     setTitle("");
     setDescription("");
     setEventDate("");
-    setPosterFile(null);
+    setIsActive(true);
+    setPosterUrl("");
     setPosterPreview(null);
     setQuestions([]);
   };
@@ -104,16 +95,26 @@ export default function AdminEventsPage() {
     setMessage(null);
     setSubmitting(true);
     try {
-      const poster_url = posterFile ? "" : (editingEvent?.poster_url ?? null);
+      const poster_url = posterUrl.trim() || editingEvent?.poster_url || null;
       const eventDateIso = new Date(eventDate).toISOString();
-      const form_questions = questions.filter((q) => q.label.trim());
+      const form_questions = questions
+        .filter((q) => q.label.trim())
+        .map((q) => ({
+          id: q.id,
+          label: q.label.trim(),
+          type: q.type,
+          required: q.required ?? false,
+          ...((q.type === "select" || q.type === "checkbox") && {
+            options: (Array.isArray(q.options) ? q.options : []).map((o) => String(o).trim()).filter(Boolean),
+          }),
+        }));
 
       if (editingEvent) {
         await updateEvent(editingEvent.id, {
           title,
           description: description || null,
-          poster_url: poster_url || undefined,
-          is_active: editingEvent.is_active,
+          poster_url: poster_url ?? undefined,
+          is_active: isActive,
           event_date: eventDateIso,
           form_questions,
         });
@@ -132,7 +133,7 @@ export default function AdminEventsPage() {
         setTitle("");
         setDescription("");
         setEventDate("");
-        setPosterFile(null);
+        setPosterUrl("");
         setPosterPreview(null);
         setQuestions([]);
       }
@@ -272,6 +273,20 @@ export default function AdminEventsPage() {
                 />
               </div>
               <div>
+                <label className="mb-1 block text-sm font-medium text-text-muted">Durum (gösterim)</label>
+                <select
+                  value={isActive ? "active" : "past"}
+                  onChange={(e) => setIsActive(e.target.value === "active")}
+                  className="w-full rounded-lg border border-accent/30 bg-background px-4 py-2.5 text-text outline-none focus:border-accent focus:ring-2 focus:ring-accent/30"
+                >
+                  <option value="active">Güncel (yaklaşan etkinliklerde göster)</option>
+                  <option value="past">Geçmiş (geçmiş partilerde göster)</option>
+                </select>
+                <p className="mt-1 text-xs text-text-muted">
+                  Tarih geçince etkinlik otomatik geçmişe düşer. İsterseniz manuel de geçmiş/güncel yapabilirsiniz.
+                </p>
+              </div>
+              <div>
                 <label htmlFor="description" className="mb-1 block text-sm font-medium text-text-muted">Açıklama</label>
                 <textarea
                   id="description"
@@ -288,20 +303,24 @@ export default function AdminEventsPage() {
           <div className="rounded-xl border border-accent/20 bg-background-dark p-6">
             <h3 className="mb-4 text-lg font-semibold text-text-bright">Afiş</h3>
             <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
-              <label className="flex h-40 w-40 shrink-0 cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-accent/30 bg-background text-text-muted transition-colors hover:border-accent/50 hover:bg-accent/5">
-                <input type="file" accept="image/*" className="hidden" onChange={handlePosterChange} />
-                {posterPreview ? (
-                  <img src={posterPreview} alt="Önizleme" className="h-full w-full rounded-lg object-cover" />
-                ) : (
-                  <>
-                    <svg className="mb-2 h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                    </svg>
-                    <span className="text-xs">Görsel yükle</span>
-                  </>
-                )}
-              </label>
-              <p className="text-sm text-text-muted">Önerilen: 800×1200 px. URL ile eklenen afiş düzenlemede korunur.</p>
+              {posterPreview ? (
+                <div className="h-40 w-40 shrink-0 overflow-hidden rounded-lg border border-accent/20 bg-background">
+                  <img src={posterPreview} alt="Afiş önizleme" className="h-full w-full object-cover" />
+                </div>
+              ) : null}
+              <div className="flex-1 space-y-2">
+                <p className="text-sm text-text-muted">Afiş görselinin URL'sini yapıştırın (örn. Imgur, Supabase Storage). Önerilen: 800×1200 px.</p>
+                <input
+                  type="url"
+                  value={posterUrl}
+                  onChange={(e) => {
+                    setPosterUrl(e.target.value);
+                    setPosterPreview(e.target.value.trim() || null);
+                  }}
+                  placeholder="https://... afiş görseli URL'si"
+                  className="w-full rounded-lg border border-accent/30 bg-background px-3 py-2 text-sm text-text placeholder:text-text-muted outline-none focus:border-accent"
+                />
+              </div>
             </div>
           </div>
 
@@ -328,7 +347,12 @@ export default function AdminEventsPage() {
                       />
                       <select
                         value={q.type}
-                        onChange={(e) => updateQuestion(q.id, { type: e.target.value as FormQuestion["type"] })}
+                        onChange={(e) => {
+                          const newType = e.target.value as FormQuestion["type"];
+                          const updates: Partial<FormQuestion> = { type: newType };
+                          if ((newType === "select" || newType === "checkbox") && !Array.isArray(q.options)) updates.options = [];
+                          updateQuestion(q.id, updates);
+                        }}
                         className="rounded-lg border border-accent/30 bg-background-dark px-3 py-2 text-sm text-text outline-none focus:border-accent"
                       >
                         {QUESTION_TYPES.map(({ value, label }) => (
@@ -343,14 +367,45 @@ export default function AdminEventsPage() {
                         <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                       </button>
                     </div>
-                    {q.type === "select" && (
-                      <input
-                        type="text"
-                        value={(q.options ?? []).join(", ")}
-                        onChange={(e) => updateQuestion(q.id, { options: e.target.value.split(",").map((s) => s.trim()).filter(Boolean) })}
-                        placeholder="Seçenek 1, Seçenek 2"
-                        className="w-full rounded-lg border border-accent/30 bg-background-dark px-3 py-2 text-sm text-text outline-none focus:border-accent"
-                      />
+                    {(q.type === "select" || q.type === "checkbox") && (
+                      <div className="space-y-2">
+                        <p className="text-xs text-text-muted">
+                          {q.type === "select" ? "Açılır listede görünecek seçenekler." : "Her biri ayrı onay kutusu olarak görünür."} Tek tek ekleyin.
+                        </p>
+                        {(Array.isArray(q.options) ? q.options : []).map((opt, optIndex) => (
+                          <div key={`${q.id}-opt-${optIndex}`} className="flex gap-2">
+                            <input
+                              type="text"
+                              value={opt}
+                              onChange={(e) => {
+                                const next = [...(q.options ?? [])];
+                                next[optIndex] = e.target.value;
+                                updateQuestion(q.id, { options: next });
+                              }}
+                              placeholder={q.type === "select" ? `Seçenek ${optIndex + 1}` : `Kutu ${optIndex + 1}`}
+                              className="flex-1 rounded-lg border border-accent/30 bg-background-dark px-3 py-2 text-sm text-text outline-none focus:border-accent"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const next = (q.options ?? []).filter((_, i) => i !== optIndex);
+                                updateQuestion(q.id, { options: next });
+                              }}
+                              className="rounded-lg p-2 text-red-400 hover:bg-red-500/10"
+                              aria-label="Seçeneği sil"
+                            >
+                              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                            </button>
+                          </div>
+                        ))}
+                        <button
+                          type="button"
+                          onClick={() => updateQuestion(q.id, { options: [...(q.options ?? []), ""] })}
+                          className="rounded-lg border border-dashed border-accent/40 bg-accent/5 px-4 py-2 text-sm font-medium text-accent-secondary hover:bg-accent/10"
+                        >
+                          + Seçenek ekle
+                        </button>
+                      </div>
                     )}
                   </li>
                 ))}

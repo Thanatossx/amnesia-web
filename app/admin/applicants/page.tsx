@@ -172,7 +172,6 @@ export default function AdminApplicantsPage() {
               <thead>
                 <tr className="border-b border-accent/20 bg-background">
                   <th className="px-4 py-3 font-semibold text-text-bright">Ad Soyad</th>
-                  <th className="px-4 py-3 font-semibold text-text-bright">E-posta</th>
                   <th className="px-4 py-3 font-semibold text-text-bright">Telefon</th>
                   <th className="px-4 py-3 font-semibold text-text-bright">Cevaplar</th>
                   <th className="px-4 py-3 font-semibold text-text-bright">Durum</th>
@@ -186,7 +185,6 @@ export default function AdminApplicantsPage() {
                     className="border-b border-accent/10 transition-colors hover:bg-accent/5"
                   >
                     <td className="px-4 py-3 font-medium text-text">{applicant.full_name}</td>
-                    <td className="px-4 py-3 text-text-muted">{applicant.email}</td>
                     <td className="px-4 py-3 text-text-muted">{applicant.phone ?? "—"}</td>
                     <td className="max-w-xs px-4 py-3">
                       <div className="space-y-1">

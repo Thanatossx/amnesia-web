@@ -31,3 +31,26 @@ body {
   background-color: rgba(107, 33, 168, 0.4);
   color: #fff;
 }
+
+/* Custom scrollbar – modal / form alanları */
+.scroll-area {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(107, 33, 168, 0.5) transparent;
+}
+
+.scroll-area::-webkit-scrollbar {
+  width: 8px;
+}
+
+.scroll-area::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scroll-area::-webkit-scrollbar-thumb {
+  background: rgba(107, 33, 168, 0.5);
+  border-radius: 4px;
+}
+
+.scroll-area::-webkit-scrollbar-thumb:hover {
+  background: rgba(107, 33, 168, 0.7);
+}

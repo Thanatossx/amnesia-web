@@ -21,13 +21,14 @@ export async function getActiveEvents(): Promise<Event[]> {
 
 export async function getPastEvents(): Promise<Event[]> {
   const supabase = createClient();
+  const now = new Date().toISOString();
   const { data, error } = await supabase
     .from("events")
     .select("*")
-    .eq("is_active", false)
     .order("event_date", { ascending: false });
   if (error) return [];
-  return (data ?? []) as Event[];
+  const events = (data ?? []) as Event[];
+  return events.filter((e) => new Date(e.event_date) < new Date(now) || !e.is_active);
 }
 
 export async function getYoutubeVideos(limit = 3): Promise<YoutubeVideo[]> {
@@ -67,7 +68,7 @@ export async function submitApplicant(data: ApplicantInsert): Promise<void> {
   const { error } = await supabase.from("applicants").insert({
     event_id: data.event_id,
     full_name: data.full_name.trim(),
-    email: data.email.trim(),
+    email: data.email?.trim() || null,
     phone: data.phone?.trim() || null,
     answers: data.answers ?? {},
     status: "bekliyor",

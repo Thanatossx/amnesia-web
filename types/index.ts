@@ -10,7 +10,7 @@
 export interface FormQuestion {
   id: string;
   label: string;
-  type: "text" | "textarea" | "email" | "tel" | "select" | "checkbox";
+  type: "text" | "textarea" | "tel" | "select" | "checkbox";
   required?: boolean;
   options?: string[]; // select için
 }
@@ -48,7 +48,7 @@ export interface Applicant {
   id: string;
   event_id: string;
   full_name: string;
-  email: string;
+  email: string | null;
   phone: string | null;
   answers: ApplicantAnswers;
   status: ApplicantStatus;

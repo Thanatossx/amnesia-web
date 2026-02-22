@@ -33,7 +33,7 @@ CREATE TABLE applicants (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   event_id UUID NOT NULL REFERENCES events (id) ON DELETE CASCADE,
   full_name TEXT NOT NULL,
-  email TEXT NOT NULL,
+  email TEXT,
   phone TEXT,
   answers JSONB DEFAULT '{}'::jsonb,
   status TEXT NOT NULL DEFAULT 'bekliyor' CHECK (
