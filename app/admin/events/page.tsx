@@ -309,7 +309,7 @@ export default function AdminEventsPage() {
                 </div>
               ) : null}
               <div className="flex-1 space-y-2">
-                <p className="text-sm text-text-muted">Afiş görselinin URL'sini yapıştırın (örn. Imgur, Supabase Storage). Önerilen: 800×1200 px.</p>
+                <p className="text-sm text-text-muted">Afiş görselinin URL&apos;sini yapıştırın (örn. Imgur, Supabase Storage). Önerilen: 800×1200 px.</p>
                 <input
                   type="url"
                   value={posterUrl}
@@ -317,7 +317,7 @@ export default function AdminEventsPage() {
                     setPosterUrl(e.target.value);
                     setPosterPreview(e.target.value.trim() || null);
                   }}
-                  placeholder="https://... afiş görseli URL'si"
+                  placeholder="https://... afiş görseli URL adresi"
                   className="w-full rounded-lg border border-accent/30 bg-background px-3 py-2 text-sm text-text placeholder:text-text-muted outline-none focus:border-accent"
                 />
               </div>
