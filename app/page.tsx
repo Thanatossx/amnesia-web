@@ -83,9 +83,6 @@ export default function HomePage() {
             <h1 className="text-4xl font-bold tracking-[0.15em] text-text-bright drop-shadow-sm sm:text-5xl md:text-6xl">
               AMNESIA
             </h1>
-            <p className="mx-auto mt-4 max-w-xl text-lg leading-relaxed text-text-muted">
-              Rave party deneyiminizin başladığı yer.
-            </p>
           </div>
 
           <h2 className="mb-2 text-xs font-semibold uppercase tracking-[0.2em] text-accent-secondary sm:text-sm">

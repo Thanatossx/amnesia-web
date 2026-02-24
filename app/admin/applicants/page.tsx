@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import type { Event, Applicant, ApplicantStatus } from "@/types";
+import type { Event, Applicant, ApplicantStatus, FormQuestion } from "@/types";
 import {
   getEvents,
   getApplicantsByEventId,
@@ -102,6 +102,18 @@ export default function AdminApplicantsPage() {
     }
   };
 
+  const selectedEvent = events.find((e) => e.id === selectedEventId);
+  const formQuestions: FormQuestion[] = (selectedEvent?.form_questions ?? []).filter(
+    (q) => q && typeof q.label === "string" && q.label.trim()
+  ) as FormQuestion[];
+
+  function formatAnswer(value: unknown): string {
+    if (value == null) return "—";
+    if (Array.isArray(value)) return value.join(", ");
+    if (typeof value === "boolean") return value ? "Evet" : "Hayır";
+    return String(value);
+  }
+
   return (
     <div>
       <h1 className="text-2xl font-bold text-text-bright">Başvurular</h1>
@@ -171,11 +183,15 @@ export default function AdminApplicantsPage() {
             <table className="w-full min-w-[600px] text-left text-sm">
               <thead>
                 <tr className="border-b border-accent/20 bg-background">
-                  <th className="px-4 py-3 font-semibold text-text-bright">Ad Soyad</th>
-                  <th className="px-4 py-3 font-semibold text-text-bright">Telefon</th>
-                  <th className="px-4 py-3 font-semibold text-text-bright">Cevaplar</th>
-                  <th className="px-4 py-3 font-semibold text-text-bright">Durum</th>
-                  <th className="px-4 py-3 font-semibold text-text-bright text-right">İşlem</th>
+                  <th className="whitespace-nowrap px-4 py-3 font-semibold text-text-bright">Ad Soyad</th>
+                  <th className="whitespace-nowrap px-4 py-3 font-semibold text-text-bright">Telefon</th>
+                  {formQuestions.map((q) => (
+                    <th key={q.id} className="max-w-[180px] truncate px-3 py-3 font-semibold text-text-bright" title={q.label}>
+                      {q.label}
+                    </th>
+                  ))}
+                  <th className="whitespace-nowrap px-4 py-3 font-semibold text-text-bright">Durum</th>
+                  <th className="whitespace-nowrap px-4 py-3 font-semibold text-text-bright text-right">İşlem</th>
                 </tr>
               </thead>
               <tbody>
@@ -184,29 +200,14 @@ export default function AdminApplicantsPage() {
                     key={applicant.id}
                     className="border-b border-accent/10 transition-colors hover:bg-accent/5"
                   >
-                    <td className="px-4 py-3 font-medium text-text">{applicant.full_name}</td>
-                    <td className="px-4 py-3 text-text-muted">{applicant.phone ?? "—"}</td>
-                    <td className="max-w-xs px-4 py-3">
-                      <div className="space-y-1">
-                        {Object.entries(applicant.answers).length === 0 ? (
-                          <span className="text-text-muted">—</span>
-                        ) : (
-                          Object.entries(applicant.answers).map(([key, value]) => (
-                            <div key={key} className="text-text-muted">
-                              <span className="text-text-muted/80">{key}:</span>{" "}
-                              {Array.isArray(value)
-                                ? value.join(", ")
-                                : typeof value === "boolean"
-                                  ? value
-                                    ? "Evet"
-                                    : "Hayır"
-                                  : String(value)}
-                            </div>
-                          ))
-                        )}
-                      </div>
-                    </td>
-                    <td className="px-4 py-3">
+                    <td className="whitespace-nowrap px-4 py-3 font-medium text-text">{applicant.full_name}</td>
+                    <td className="whitespace-nowrap px-4 py-3 text-text-muted">{applicant.phone ?? "—"}</td>
+                    {formQuestions.map((q) => (
+                      <td key={q.id} className="max-w-[200px] px-3 py-3 text-text-muted" title={formatAnswer(applicant.answers[q.id])}>
+                        <span className="line-clamp-2">{formatAnswer(applicant.answers[q.id])}</span>
+                      </td>
+                    ))}
+                    <td className="whitespace-nowrap px-4 py-3">
                       <select
                         value={applicant.status}
                         onChange={(e) =>
