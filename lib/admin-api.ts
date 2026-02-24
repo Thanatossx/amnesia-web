@@ -36,6 +36,13 @@ export async function getEvents(activeOnly?: boolean): Promise<Event[]> {
   return (data ?? []) as Event[];
 }
 
+export async function getEventById(id: string): Promise<Event | null> {
+  const supabase = createClient();
+  const { data, error } = await supabase.from("events").select("*").eq("id", id).maybeSingle();
+  if (error) throw new Error(error.message);
+  return data as Event | null;
+}
+
 export async function updateEvent(id: string, data: EventUpdate): Promise<Event> {
   const supabase = createClient();
   const { data: row, error } = await supabase
@@ -113,6 +120,13 @@ export async function getApplicantsByEventId(eventId: string): Promise<Applicant
     .order("created_at", { ascending: false });
   if (error) throw new Error(error.message);
   return (data ?? []) as Applicant[];
+}
+
+export async function getApplicant(id: string): Promise<Applicant | null> {
+  const supabase = createClient();
+  const { data, error } = await supabase.from("applicants").select("*").eq("id", id).maybeSingle();
+  if (error) throw new Error(error.message);
+  return data as Applicant | null;
 }
 
 export async function updateApplicantStatus(applicantId: string, status: ApplicantStatus): Promise<void> {

@@ -145,7 +145,7 @@ export default function HomePage() {
       <section className="border-b border-accent/20 bg-background-dark py-16 sm:py-20">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <h2 className="mb-2 text-xs font-semibold uppercase tracking-[0.2em] text-accent-secondary sm:text-sm">
-            Geçmiş Partiler
+            Geçmiş Etkinlikler
           </h2>
           <div className="mb-6 h-0.5 w-12 rounded-full bg-accent/50" />
           {loading ? (

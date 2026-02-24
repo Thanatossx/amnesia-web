@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import type { Event, Applicant, ApplicantStatus, FormQuestion } from "@/types";
 import {
   getEvents,
@@ -16,9 +17,23 @@ const STATUS_OPTIONS: { value: ApplicantStatus; label: string }[] = [
   { value: "bilet_verildi", label: "Bilet Verildi" },
 ];
 
+function getRowStatusClass(status: ApplicantStatus): string {
+  switch (status) {
+    case "onaylandı":
+      return "bg-yellow-500/10 hover:bg-yellow-500/15";
+    case "bilet_verildi":
+      return "bg-green-500/10 hover:bg-green-500/15";
+    case "reddedildi":
+      return "bg-red-500/10 hover:bg-red-500/15";
+    default:
+      return "hover:bg-accent/5";
+  }
+}
+
 type EventFilter = "active" | "past";
 
 export default function AdminApplicantsPage() {
+  const router = useRouter();
   const [eventFilter, setEventFilter] = useState<EventFilter>("active");
   const [events, setEvents] = useState<Event[]>([]);
   const [selectedEventId, setSelectedEventId] = useState<string>("");
@@ -198,7 +213,8 @@ export default function AdminApplicantsPage() {
                 {applicants.map((applicant) => (
                   <tr
                     key={applicant.id}
-                    className="border-b border-accent/10 transition-colors hover:bg-accent/5"
+                    onClick={() => router.push(`/admin/applicants/${applicant.id}`)}
+                    className={`cursor-pointer border-b border-accent/10 transition-colors ${getRowStatusClass(applicant.status)}`}
                   >
                     <td className="whitespace-nowrap px-4 py-3 font-medium text-text">{applicant.full_name}</td>
                     <td className="whitespace-nowrap px-4 py-3 text-text-muted">{applicant.phone ?? "—"}</td>
@@ -207,7 +223,7 @@ export default function AdminApplicantsPage() {
                         <span className="line-clamp-2">{formatAnswer(applicant.answers[q.id])}</span>
                       </td>
                     ))}
-                    <td className="whitespace-nowrap px-4 py-3">
+                    <td className="whitespace-nowrap px-4 py-3" onClick={(e) => e.stopPropagation()}>
                       <select
                         value={applicant.status}
                         onChange={(e) =>
@@ -223,7 +239,7 @@ export default function AdminApplicantsPage() {
                         ))}
                       </select>
                     </td>
-                    <td className="px-4 py-3 text-right">
+                    <td className="px-4 py-3 text-right" onClick={(e) => e.stopPropagation()}>
                       <button
                         type="button"
                         onClick={() => handleDelete(applicant.id)}

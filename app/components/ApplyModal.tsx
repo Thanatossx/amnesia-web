@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { submitApplicant } from "@/lib/public-api";
 import type { Event, FormQuestion, ApplicantAnswers } from "@/types";
 
@@ -18,7 +18,9 @@ export default function ApplyModal({ isOpen, onClose, event }: ApplyModalProps) 
   const [phone, setPhone] = useState("");
   const [answers, setAnswers] = useState<ApplicantAnswers>({});
   const [submitting, setSubmitting] = useState(false);
+  const [success, setSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const successTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const formQuestions: FormQuestion[] = (event?.form_questions ?? [])
     .filter((q) => q && typeof q.label === "string" && q.label.trim())
@@ -37,6 +39,7 @@ export default function ApplyModal({ isOpen, onClose, event }: ApplyModalProps) 
       document.body.style.overflow = "hidden";
       window.addEventListener("keydown", handleEscape);
       setError(null);
+      setSuccess(false);
       setFullName("");
       setPhone("");
       setAnswers({});
@@ -44,6 +47,10 @@ export default function ApplyModal({ isOpen, onClose, event }: ApplyModalProps) 
     return () => {
       document.body.style.overflow = "";
       window.removeEventListener("keydown", handleEscape);
+      if (successTimeoutRef.current) {
+        clearTimeout(successTimeoutRef.current);
+        successTimeoutRef.current = null;
+      }
     };
   }, [isOpen, onClose]);
 
@@ -68,7 +75,13 @@ export default function ApplyModal({ isOpen, onClose, event }: ApplyModalProps) 
       setFullName("");
       setPhone("");
       setAnswers({});
-      onClose();
+      setSuccess(true);
+      if (successTimeoutRef.current) clearTimeout(successTimeoutRef.current);
+      successTimeoutRef.current = setTimeout(() => {
+        successTimeoutRef.current = null;
+        setSuccess(false);
+        onClose();
+      }, 2000);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Başvuru gönderilemedi.");
     } finally {
@@ -105,6 +118,16 @@ export default function ApplyModal({ isOpen, onClose, event }: ApplyModalProps) 
             </svg>
           </button>
         </div>
+        {success ? (
+          <div className="flex flex-1 flex-col items-center justify-center gap-4 p-8 text-center">
+            <p className="text-lg font-medium text-green-400">
+              Başvuruyu başarıyla gönderdiniz.
+            </p>
+            <p className="text-sm text-text-muted">
+              Pencere birkaç saniye içinde kapanacak.
+            </p>
+          </div>
+        ) : (
         <form className="flex min-h-0 flex-1 flex-col" onSubmit={handleSubmit}>
           <div className="scroll-area min-h-0 flex-1 space-y-5 overflow-y-auto p-6">
           <div>
@@ -145,7 +168,7 @@ export default function ApplyModal({ isOpen, onClose, event }: ApplyModalProps) 
           {formQuestions.map((q) => (
             <div key={q.id}>
               <label htmlFor={q.id} className="mb-1.5 block text-sm font-medium text-text-muted">
-                {q.label}
+                <span className="whitespace-pre-wrap">{q.label}</span>
                 {(q.required ?? false) && <span className="text-red-400"> *</span>}
               </label>
               {q.type === "text" && (
@@ -259,6 +282,7 @@ export default function ApplyModal({ isOpen, onClose, event }: ApplyModalProps) 
             </button>
           </div>
         </form>
+        )}
       </div>
     </div>
   );

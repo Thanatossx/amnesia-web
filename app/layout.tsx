@@ -4,7 +4,7 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 
 export const metadata: Metadata = {
-  title: "Amnesia | Rave Party",
+  title: "Amnesia",
   description: "Amnesia rave party organizasyonu",
 };
 

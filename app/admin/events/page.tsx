@@ -337,14 +337,14 @@ export default function AdminEventsPage() {
               <ul className="space-y-4">
                 {questions.map((q) => (
                   <li key={q.id} className="flex flex-col gap-3 rounded-lg border border-accent/10 bg-background p-4">
-                    <div className="flex gap-3">
-                      <input
-                        type="text"
-                        value={q.label}
-                        onChange={(e) => updateQuestion(q.id, { label: e.target.value })}
-                        placeholder="Soru metni"
-                        className="flex-1 rounded-lg border border-accent/30 bg-background-dark px-3 py-2 text-sm text-text outline-none focus:border-accent"
-                      />
+                    <textarea
+                      value={q.label}
+                      onChange={(e) => updateQuestion(q.id, { label: e.target.value })}
+                      placeholder="Soru metni veya açıklama (manifesto, kurallar vb. — alt satıra geçmek için Enter)"
+                      rows={4}
+                      className="w-full min-h-[80px] resize-y rounded-lg border border-accent/30 bg-background-dark px-3 py-2 text-sm text-text outline-none focus:border-accent"
+                    />
+                    <div className="flex flex-wrap items-center gap-3">
                       <select
                         value={q.type}
                         onChange={(e) => {
