@@ -25,11 +25,12 @@ export async function createEvent(data: EventInsert): Promise<Event> {
 
 export async function getEvents(activeOnly?: boolean): Promise<Event[]> {
   const supabase = createClient();
+  const now = new Date().toISOString();
   let query = supabase.from("events").select("*").order("event_date", { ascending: false });
   if (activeOnly === true) {
-    query = query.eq("is_active", true).gte("event_date", new Date().toISOString());
+    query = query.eq("is_active", true).gte("event_date", now);
   } else if (activeOnly === false) {
-    query = query.eq("is_active", false);
+    query = query.lt("event_date", now);
   }
   const { data, error } = await query;
   if (error) throw new Error(error.message);

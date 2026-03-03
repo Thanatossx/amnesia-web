@@ -19,6 +19,7 @@ export default function AdminMessagesPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [selectedMessage, setSelectedMessage] = useState<ContactMessage | null>(null);
 
   useEffect(() => {
     async function load() {
@@ -36,6 +37,18 @@ export default function AdminMessagesPage() {
     }
     load();
   }, []);
+
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => e.key === "Escape" && setSelectedMessage(null);
+    if (selectedMessage) {
+      document.body.style.overflow = "hidden";
+      window.addEventListener("keydown", handleEscape);
+    }
+    return () => {
+      document.body.style.overflow = "";
+      window.removeEventListener("keydown", handleEscape);
+    };
+  }, [selectedMessage]);
 
   const handleDelete = async (id: string) => {
     if (!confirm("Bu mesajı silmek istediğinize emin misiniz?")) return;
@@ -85,7 +98,8 @@ export default function AdminMessagesPage() {
                 {messages.map((msg) => (
                   <tr
                     key={msg.id}
-                    className="border-b border-accent/10 transition-colors hover:bg-accent/5"
+                    onClick={() => setSelectedMessage(msg)}
+                    className="cursor-pointer border-b border-accent/10 transition-colors hover:bg-accent/5"
                   >
                     <td className="whitespace-nowrap px-4 py-3 text-text-muted">
                       {formatDate(msg.created_at)}
@@ -95,7 +109,7 @@ export default function AdminMessagesPage() {
                     <td className="max-w-md px-4 py-3 text-text-muted">
                       <span className="line-clamp-2">{msg.message}</span>
                     </td>
-                    <td className="px-4 py-3 text-right">
+                    <td className="px-4 py-3 text-right" onClick={(e) => e.stopPropagation()}>
                       <button
                         type="button"
                         onClick={() => handleDelete(msg.id)}
@@ -112,6 +126,73 @@ export default function AdminMessagesPage() {
           </div>
         )}
       </div>
+
+      {/* Mesaj detay modal */}
+      {selectedMessage && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="message-modal-title"
+        >
+          <div
+            className="absolute inset-0 bg-black/80 backdrop-blur-sm"
+            onClick={() => setSelectedMessage(null)}
+          />
+          <div className="relative flex max-h-[85vh] w-full max-w-lg flex-col rounded-xl border border-accent/20 bg-background-dark shadow-xl">
+            <div className="flex shrink-0 items-center justify-between border-b border-accent/20 px-5 py-4">
+              <h2 id="message-modal-title" className="text-lg font-semibold text-text-bright">
+                İletişim mesajı
+              </h2>
+              <button
+                type="button"
+                onClick={() => setSelectedMessage(null)}
+                className="rounded-lg p-2 text-text-muted transition-colors hover:bg-accent/20 hover:text-text"
+                aria-label="Kapat"
+              >
+                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <div className="min-h-0 flex-1 space-y-4 overflow-y-auto p-5">
+              <div>
+                <p className="text-xs font-medium uppercase tracking-wider text-text-muted">Tarih</p>
+                <p className="mt-0.5 text-text">{formatDate(selectedMessage.created_at)}</p>
+              </div>
+              <div>
+                <p className="text-xs font-medium uppercase tracking-wider text-text-muted">Ad Soyad</p>
+                <p className="mt-0.5 text-text">{selectedMessage.full_name}</p>
+              </div>
+              <div>
+                <p className="text-xs font-medium uppercase tracking-wider text-text-muted">Telefon</p>
+                <p className="mt-0.5 text-text">{selectedMessage.phone}</p>
+              </div>
+              <div>
+                <p className="text-xs font-medium uppercase tracking-wider text-text-muted">Mesaj</p>
+                <p className="mt-0.5 whitespace-pre-wrap text-text">{selectedMessage.message}</p>
+              </div>
+            </div>
+            <div className="flex shrink-0 justify-end gap-2 border-t border-accent/20 p-4">
+              <button
+                type="button"
+                onClick={() => handleDelete(selectedMessage.id).then(() => setSelectedMessage(null))}
+                disabled={deletingId === selectedMessage.id}
+                className="rounded-lg px-4 py-2 text-sm font-medium text-red-400 hover:bg-red-500/10 disabled:opacity-50"
+              >
+                {deletingId === selectedMessage.id ? "…" : "Mesajı sil"}
+              </button>
+              <button
+                type="button"
+                onClick={() => setSelectedMessage(null)}
+                className="rounded-lg border border-accent/30 bg-background px-4 py-2 text-sm font-medium text-text hover:bg-accent/10"
+              >
+                Kapat
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
